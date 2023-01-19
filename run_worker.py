@@ -9,17 +9,17 @@ from temporalio.worker import Worker
 
 with workflow.unsafe.imports_passed_through():
     from flask import Flask, flash, redirect, render_template, request, url_for
-from app import Subscription, app, subscription_list
+from app import Subscription, app, send_email
+
+client = Client("localhost:7233")
 
 
-# Define a Temporal activity to handle the form submission
 @activity.defn
-async def handle_subscription(subscription: Subscription):
-    subscription_list.append(subscription)
-    return redirect(url_for("list_subscribers"))
+async def handle_subscription():
+    # what do we do here?
+    pass
 
 
-# Define a Temporal Workflow to execute the activity
 @workflow.defn
 class SubscriptionWorkflow:
     @workflow.run
@@ -32,7 +32,6 @@ class SubscriptionWorkflow:
 
 
 async def main():
-    client = await Client.connect("localhost:7233")
     async with Worker(
         client,
         task_queue="subscription-task-queue",
@@ -50,4 +49,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

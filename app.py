@@ -1,3 +1,5 @@
+import asyncio
+
 from flask import (
     Flask,
     escape,
@@ -15,58 +17,79 @@ app = Flask(__name__)
 # TEMPORARY - Set the secret key to a temporary value!
 app.secret_key = "BAD_SECRET_KEY"
 
-
 # Log that the Flask application is starting
 app.logger.info("Starting the Flask App...")
-
-from dataclasses import dataclass
 
 # --------------
 # Helper Classes
 # --------------
 
 
-@dataclass
 class Subscription:
-    status: bool
-    count: int
-    email: str
+    def __init__(
+        self,
+        email: str,
+        is_subscribe: bool,
+        num_of_emails_sent: int,
+        frequency: float = 3,
+    ):
+        self.email = email
+        self.is_subscribe = is_subscribe
+        self.num_of_emails_sent = num_of_emails_sent
+        self.frequency = frequency
 
+
+DEFAULT_FREQUENCY_IN_MIL_SEC = 1
 
 # ------
 # Routes
 # ------
 
-subscription_list = []
+
+async def send_email(email: str, message: str) -> None:
+    print(f"Sending email to {email} with the following message: \n{message}.")
 
 
 @app.route("/", methods=["GET", "POST"])
 async def get_subscriber():
     if request.method == "POST":
-        # Print the form data to the console
-        for key, value in request.form.items():
-            print(f"{key}: {value}")
+        try:
+            email = request.form["email"]
+            is_subscribe = True
+            # check for valid email address
+            if not is_valid_email(email):
+                flash("Invalid Email, Please enter valid email address")
+                return redirect(url_for("get_subscriber"))
+            else:
+                subscription = Subscription(
+                    email, is_subscribe, 0, DEFAULT_FREQUENCY_IN_MIL_SEC
+                )
+                await send_email(subscription.email, "Thank you for subscribing!")
+                while subscription.is_subscribe:
+                    await asyncio.sleep(subscription.frequency)
 
-            subscription_data = Subscription(
-                email=request.form["email"], count=1, status=True
-            )
-            print(subscription_data)
-            # Save the form data to the session object
-            subscription_list.append(subscription_data)
-            flash(f"Added new email ({subscription_data.email})!", "success")
-            app.logger.info(f"Added new email ({request.form['email']})!")
+                    if subscription.is_subscribe:
+                        subscription.num_of_emails_sent += 1
+                        await send_email(
+                            subscription.email,
+                            f"Frequency Email: {subscription.num_of_emails_sent}!",
+                        )
 
-            return redirect(url_for("list_subscribers"))
+                flash("You are unsubscribed from our service")
+                return redirect(url_for("unsubscribe"))
+
+        except Exception as e:
+            flash(f"Error: {e}")
 
     return render_template("home.html")
 
 
-@app.route("/subscribers/")
-async def list_subscribers():
-    # Retrieve the form data from the session object
-    return render_template("list_subscribers.html", subscribers=subscription_list)
+def is_valid_email(email: str) -> bool:
+    import re
+
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email)
 
 
-@app.route("/users/")
-async def list_users():
-    return render_template("list_users.html", subscribers=subscription_list)
+if __name__ == "__main__":
+    app.run(debug=True)
