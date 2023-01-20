@@ -1,16 +1,9 @@
 import asyncio
 
-from flask import (
-    Flask,
-    escape,
-    flash,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-)
-from flask.logging import default_handler
+from flask import Flask
+from temporalio.client import Client
+
+from run_worker import Subscription, SubscriptionWorkflow
 
 app = Flask(__name__)
 
@@ -20,68 +13,34 @@ app.secret_key = "BAD_SECRET_KEY"
 # Log that the Flask application is starting
 app.logger.info("Starting the Flask App...")
 
-# --------------
-# Helper Classes
-# --------------
-
-
-class Subscription:
-    def __init__(
-        self,
-        email: str,
-        is_subscribe: bool,
-        num_of_emails_sent: int,
-        frequency: float = 3,
-    ):
-        self.email = email
-        self.is_subscribe = is_subscribe
-        self.num_of_emails_sent = num_of_emails_sent
-        self.frequency = frequency
-
-
-DEFAULT_FREQUENCY_IN_MIL_SEC = 1
+client = Client("localhost:7233")
 
 # ------
 # Routes
 # ------
 
 
-async def send_email(email: str, message: str) -> None:
-    print(f"Sending email to {email} with the following message: \n{message}.")
 
 
-@app.route("/", methods=["GET", "POST"])
-async def get_subscriber():
-    if request.method == "POST":
-        try:
-            email = request.form["email"]
-            is_subscribe = True
-            # check for valid email address
-            if not is_valid_email(email):
-                flash("Invalid Email, Please enter valid email address")
-                return redirect(url_for("get_subscriber"))
-            else:
-                subscription = Subscription(
-                    email, is_subscribe, 0, DEFAULT_FREQUENCY_IN_MIL_SEC
-                )
-                await send_email(subscription.email, "Thank you for subscribing!")
-                while subscription.is_subscribe:
-                    await asyncio.sleep(subscription.frequency)
 
-                    if subscription.is_subscribe:
-                        subscription.num_of_emails_sent += 1
-                        await send_email(
-                            subscription.email,
-                            f"Frequency Email: {subscription.num_of_emails_sent}!",
-                        )
+@app.route("/subscribe/", methods=["POST"])
+async def start_subscriber():
 
-                flash("You are unsubscribed from our service")
-                return redirect(url_for("unsubscribe"))
+    await client.execute_workflow(
+        SubscriptionWorkflow.run,
+        Subscription,
+        id="subscription-workflow-id",
+        task_queue="subscription-task-queue",
+    )
 
-        except Exception as e:
-            flash(f"Error: {e}")
 
-    return render_template("home.html")
+app.route("/get_details/", methods=["GET"])
+async def get_subscriber(email):
+    # client.query(wf-id, )
+    # how to define a query
+    # get the state of thw query
+    # how many emails have been sent
+    pass
 
 
 def is_valid_email(email: str) -> bool:
