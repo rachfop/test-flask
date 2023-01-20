@@ -20,9 +20,6 @@ client = Client("localhost:7233")
 # ------
 
 
-
-
-
 @app.route("/subscribe/", methods=["POST"])
 async def start_subscriber():
 
@@ -35,6 +32,8 @@ async def start_subscriber():
 
 
 app.route("/get_details/", methods=["GET"])
+
+
 async def get_subscriber(email):
     # client.query(wf-id, )
     # how to define a query
