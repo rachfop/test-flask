@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -17,6 +16,7 @@ class ComposeEmail:
 @activity.defn
 async def send_email(details: ComposeEmail) -> str:
     print(f"Sending email to {details.email} with message: {details.message}")
+    return "success"
 
 
 @workflow.defn
@@ -24,7 +24,7 @@ class SendEmailWorkflow:
     @workflow.run
     async def run(self, email, message):
 
-        return await workflow.execute_activity(
+        return await workflow.start_activity(
             send_email,
             ComposeEmail(email, message),
             start_to_close_timeout=timedelta(seconds=10),
