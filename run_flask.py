@@ -20,7 +20,22 @@ async def start_subscription() -> str:
     )
 
     emails_sent = await handle.query(SendEmailWorkflow.count)
-    return jsonify({"status": "success", "emails_sent": emails_sent})
+    email = await handle.query(SendEmailWorkflow.greeting)
+    return jsonify({"status": "success", "email": email, "emails_sent": emails_sent})
+
+
+@app.route("/query/", methods=["POST"])
+async def get_query():
+    client = await Client.connect("localhost:7233")
+    handle = client.get_workflow_handle(
+        "send-email-activity",
+    )
+    greeting = await handle.query(SendEmailWorkflow.greeting)
+    message = await handle.query(SendEmailWorkflow.message)
+    count = await handle.query(SendEmailWorkflow.count)
+    return jsonify(
+        {"status": "query", "greeting": greeting, "message": message, "count": count}
+    )
 
 
 @app.route("/unsubscribe/", methods=["POST"])
@@ -31,17 +46,6 @@ async def end_subscription():
     )
     await handle.signal(SendEmailWorkflow.unsubscribe)
     return jsonify({"status": "end"})
-
-
-@app.route("/query/", methods=["POST"])
-async def query():
-    client = await Client.connect("localhost:7233")
-    handle = client.get_workflow_handle(
-        "send-email-activity",
-    )
-    greeting = await handle.query(SendEmailWorkflow.greeting)
-    message = await handle.query(SendEmailWorkflow.message)
-    return jsonify({"status": "query", "greeting": greeting, "message": message})
 
 
 app.run(debug=True)

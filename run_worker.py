@@ -32,15 +32,15 @@ class SendEmailWorkflow:
 
     @workflow.run
     async def run(self, email, message):
-        self._greeting = f"Hello, {email}!"
-        self._message = f"Here's your message: {message}!"
+        self._email = f"{email}"
+        self._message = "Here's your message!"
         self._subscribed = True
-        self._count += 0
+        self._count = 0
         while self._subscribed is True:
             self._count += 1
             return await workflow.start_activity(
                 send_email,
-                ComposeEmail(email, message, self._count),
+                ComposeEmail(self._email, self._message, self._count),
                 start_to_close_timeout=timedelta(seconds=10),
             )
         else:
@@ -50,6 +50,10 @@ class SendEmailWorkflow:
                 start_to_close_timeout=timedelta(seconds=10),
             )
 
+    @workflow.signal
+    def subscribe(self):
+        self._count += 1
+        self._subscribed = True
 
     @workflow.signal
     def unsubscribe(self):
@@ -58,7 +62,7 @@ class SendEmailWorkflow:
 
     @workflow.query
     def greeting(self) -> str:
-        return self._greeting
+        return self._email
 
     @workflow.query
     def message(self) -> str:
