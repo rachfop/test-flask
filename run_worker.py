@@ -36,29 +36,32 @@ class SendEmailWorkflow:
         self._message = "Here's your message!"
         self._subscribed = True
         self._count = 0
-        while self._subscribed is True:
-            self._count += 1
-            return await workflow.start_activity(
+        try:
+            while self._subscribed is True:
+                self._count += 1
+                await workflow.start_activity(
+                    send_email,
+                    ComposeEmail(self._email, self._message, self._count),
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+                # sleep for 3 seconds
+                await asyncio.sleep(3)
+        # handle unsubscribe
+        except asyncio.CancelledError:
+
+            self._subscribed = False
+            self._message = (
+                f"After {self._count} emails, {self._email} has unsubscribed."
+            )
+            await workflow.start_activity(
                 send_email,
                 ComposeEmail(self._email, self._message, self._count),
                 start_to_close_timeout=timedelta(seconds=10),
             )
-        else:
-            return await workflow.start_activity(
-                send_email,
-                ComposeEmail(email, message, self._count),
-                start_to_close_timeout=timedelta(seconds=10),
+
+            raise ValueError(
+                f"After {self._count} emails, {self._email} has unsubscribed."
             )
-
-    @workflow.signal
-    def subscribe(self):
-        self._count += 1
-        self._subscribed = True
-
-    @workflow.signal
-    def unsubscribe(self):
-        self._message = "You have unsubscribed from our mailing list."
-        self._subscribed = False
 
     @workflow.query
     def greeting(self) -> str:

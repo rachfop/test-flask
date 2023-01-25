@@ -9,18 +9,16 @@ app = Flask(__name__)
 @app.route("/subscribe/", methods=["POST"])
 async def start_subscription() -> str:
     client = await Client.connect("localhost:7233")
-    await client.start_workflow(
+    handle = await client.start_workflow(
         SendEmailWorkflow.run,
         args=(request.form["email"], request.form["message"]),
         id="send-email-activity",
         task_queue="hello-activity-task-queue",
     )
-    handle = client.get_workflow_handle(
-        "send-email-activity",
-    )
 
     emails_sent = await handle.query(SendEmailWorkflow.count)
     email = await handle.query(SendEmailWorkflow.greeting)
+
     return jsonify({"status": "success", "email": email, "emails_sent": emails_sent})
 
 
@@ -44,8 +42,9 @@ async def end_subscription():
     handle = client.get_workflow_handle(
         "send-email-activity",
     )
-    await handle.signal(SendEmailWorkflow.unsubscribe)
+    await handle.cancel()
     return jsonify({"status": "end"})
 
 
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
