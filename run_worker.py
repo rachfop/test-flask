@@ -40,13 +40,13 @@ class SendEmailWorkflow:
             self._count += 1
             return await workflow.start_activity(
                 send_email,
-                ComposeEmail(email, message, self.count),
+                ComposeEmail(email, message, self._count),
                 start_to_close_timeout=timedelta(seconds=10),
             )
         else:
             return await workflow.start_activity(
                 send_email,
-                ComposeEmail(email, message, self.count),
+                ComposeEmail(email, message, self._count),
                 start_to_close_timeout=timedelta(seconds=10),
             )
 
