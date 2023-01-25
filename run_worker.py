@@ -11,24 +11,62 @@ from temporalio.worker import Worker
 class ComposeEmail:
     email: str
     message: str
+    count: int = 0
 
 
 @activity.defn
 async def send_email(details: ComposeEmail) -> str:
-    print(f"Sending email to {details.email} with message: {details.message}")
+    print(
+        f"Sending email to {details.email} with message: {details.message}, count: {details.count}"
+    )
     return "success"
 
 
 @workflow.defn
 class SendEmailWorkflow:
+    def __init__(self) -> None:
+        self._email: str = "<no email>"
+        self._message: str = "<no message>"
+        self._subscribed: bool = True
+        self._count: int = 0
+
     @workflow.run
     async def run(self, email, message):
+        self._greeting = f"Hello, {email}!"
+        self._message = f"Here's your message: {message}!"
+        self._subscribed = True
+        self._count += 0
+        while self._subscribed is True:
+            self._count += 1
+            return await workflow.start_activity(
+                send_email,
+                ComposeEmail(email, message, self.count),
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+        else:
+            return await workflow.start_activity(
+                send_email,
+                ComposeEmail(email, message, self.count),
+                start_to_close_timeout=timedelta(seconds=10),
+            )
 
-        return await workflow.start_activity(
-            send_email,
-            ComposeEmail(email, message),
-            start_to_close_timeout=timedelta(seconds=10),
-        )
+
+    @workflow.signal
+    def unsubscribe(self):
+        self._message = "You have unsubscribed from our mailing list."
+        self._subscribed = False
+
+    @workflow.query
+    def greeting(self) -> str:
+        return self._greeting
+
+    @workflow.query
+    def message(self) -> str:
+        return self._message
+
+    @workflow.query
+    def count(self) -> int:
+        return self._count
 
 
 async def main():
