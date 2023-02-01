@@ -2,17 +2,20 @@ from dependency_injector.wiring import Provide, inject
 from flask import Flask, jsonify, request
 from temporalio.client import Client
 
-import containers
 from run_worker import SendEmailWorkflow
 
 app = Flask(__name__)
-container = containers.Container()
+
+
+@app.before_first_request
+async def startup():
+    global client
+    client = await Client.connect("localhost:7233")
 
 
 @app.route("/subscribe/", methods=["POST"])
-@inject
 async def start_subscription() -> str:
-    client = container.temporal_client()
+
     await client.start_workflow(
         SendEmailWorkflow.run,
         args=(request.form["email"], request.form["message"]),
@@ -30,7 +33,6 @@ async def start_subscription() -> str:
 
 @app.route("/query/", methods=["POST"])
 async def get_query():
-    client = await Client.connect("localhost:7233")
     handle = client.get_workflow_handle(
         "send-email-activity",
     )
@@ -44,7 +46,6 @@ async def get_query():
 
 @app.route("/unsubscribe/", methods=["POST"])
 async def end_subscription():
-    client = await Client.connect("localhost:7233")
     handle = client.get_workflow_handle(
         "send-email-activity",
     )
