@@ -27,7 +27,7 @@ class SendEmailWorkflow:
     def __init__(self) -> None:
         self._email: str = "<no email>"
         self._message: str = "<no message>"
-        self._subscribed: bool = True
+        self._subscribed: bool = False
         self._count: int = 0
 
     @workflow.run
@@ -47,6 +47,7 @@ class SendEmailWorkflow:
                 # sleep for 3 seconds
                 await asyncio.sleep(3)
         # handle unsubscribe
+        # check to see if this error is there
         except asyncio.CancelledError:
 
             self._subscribed = False
@@ -62,6 +63,17 @@ class SendEmailWorkflow:
             raise ValueError(
                 f"After {self._count} emails, {self._email} has unsubscribed."
             )
+        # handle error
+        except Exception as e:
+            self._subscribed = False
+            self._message = f"Error: {e}"
+            await workflow.start_activity(
+                send_email,
+                ComposeEmail(self._email, self._message, self._count),
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+            raise ValueError(f"Error: {e}")
+        return ComposeEmail(self._email, self._message, self._count)
 
     @workflow.query
     def greeting(self) -> str:
