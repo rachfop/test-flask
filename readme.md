@@ -38,11 +38,11 @@ curl -X POST -d "email=test@example.com&message=hello" http://localhost:5000/sub
 ### get-details
 
 ```bash
-curl -X POST http://localhost:5000/get-details/
+curl -X GET http://localhost:5000/get-details/
 ```
 
 ### unsubscribe
 
 ```bash
-curl -X POST http://localhost:5000/unsubscribe/
+curl -X DELETE http://localhost:5000/unsubscribe/
 ```

@@ -32,7 +32,8 @@ async def start_subscription() -> str:
     return jsonify({"status": "ok", "email": email, "emails_sent": emails_sent})
 
 
-@app.route("/get-details/", methods=["POST"])
+# GET
+@app.route("/get-details/", methods=["GET"])
 async def get_query() -> Dict[str, Any]:
     handle = client.get_workflow_handle(
         "send-email-activity",
@@ -51,7 +52,8 @@ async def get_query() -> Dict[str, Any]:
     )
 
 
-@app.route("/unsubscribe/", methods=["POST"])
+# patch or delete
+@app.route("/unsubscribe/", methods=["DELETE"])
 async def end_subscription():
     handle = client.get_workflow_handle(
         "send-email-activity",
