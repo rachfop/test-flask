@@ -1,4 +1,5 @@
-from dependency_injector.wiring import Provide, inject
+from typing import Any, Dict
+
 from flask import Flask, jsonify, request
 from temporalio.client import Client
 
@@ -25,22 +26,28 @@ async def start_subscription() -> str:
     handle = client.get_workflow_handle(
         "send-email-activity",
     )
+    emails_sent: int = await handle.query(SendEmailWorkflow.count)
+    email: str = await handle.query(SendEmailWorkflow.greeting)
 
-    emails_sent = await handle.query(SendEmailWorkflow.count)
-    email = await handle.query(SendEmailWorkflow.greeting)
-    return jsonify({"status": "success", "email": email, "emails_sent": emails_sent})
+    return jsonify({"status": "ok", "email": email, "emails_sent": emails_sent})
 
 
-@app.route("/query/", methods=["POST"])
-async def get_query():
+@app.route("/get-details/", methods=["POST"])
+async def get_query() -> Dict[str, Any]:
     handle = client.get_workflow_handle(
         "send-email-activity",
     )
-    greeting = await handle.query(SendEmailWorkflow.greeting)
-    message = await handle.query(SendEmailWorkflow.message)
-    count = await handle.query(SendEmailWorkflow.count)
+    count: int = await handle.query(SendEmailWorkflow.count)
+    greeting: str = await handle.query(SendEmailWorkflow.greeting)
+    message: str = await handle.query(SendEmailWorkflow.message)
+
     return jsonify(
-        {"status": "query", "greeting": greeting, "message": message, "count": count}
+        {
+            "status": "ok",
+            "numberOfEmailsSent": count,
+            "email": greeting,
+            "message": message,
+        }
     )
 
 
@@ -50,7 +57,7 @@ async def end_subscription():
         "send-email-activity",
     )
     await handle.cancel()
-    return jsonify({"status": "end"})
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":

@@ -1,28 +1,48 @@
-```
-python3 -m venv venv
-source venv/bin/activate
-```
+# Subscription tutorial
 
+## Install
 
-```bash
-pip install "Flask[async]"
-```
-
-## Freeze
+Install [poetry](https://python-poetry.org/docs/).
 
 ```bash
-pip freeze > requirements.txt
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+Install project dependencies.
+
+```bash
+poetry install
 ```
 
 ## Run
 
-```bash
-python3 run_worker.py
-flask --app run_flask --debug run
+```python
+poetry run python run_worker.py
+poetry run python run_flask.py
 ```
 
 ## Terminate
 
 ```bash
 temporal workflow terminate --workflow-id=send-email-activity
+```
+
+## Curl commands
+
+### subscribe
+
+```bash
+curl -X POST -d "email=test@example.com&message=hello" http://localhost:5000/subscribe/
+```
+
+### get-details
+
+```bash
+curl -X POST http://localhost:5000/get-details/
+```
+
+### unsubscribe
+
+```bash
+curl -X POST http://localhost:5000/unsubscribe/
 ```

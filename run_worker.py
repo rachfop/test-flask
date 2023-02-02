@@ -36,43 +36,16 @@ class SendEmailWorkflow:
         self._message = "Here's your message!"
         self._subscribed = True
         self._count = 0
-        try:
-            while self._subscribed is True:
-                self._count += 1
-                await workflow.start_activity(
-                    send_email,
-                    ComposeEmail(self._email, self._message, self._count),
-                    start_to_close_timeout=timedelta(seconds=10),
-                )
-                # sleep for 3 seconds
-                await asyncio.sleep(3)
-        # handle unsubscribe
-        # check to see if this error is there
-        except asyncio.CancelledError:
 
-            self._subscribed = False
-            self._message = (
-                f"After {self._count} emails, {self._email} has unsubscribed."
-            )
+        while self._subscribed is True:
+            self._count += 1
             await workflow.start_activity(
                 send_email,
                 ComposeEmail(self._email, self._message, self._count),
                 start_to_close_timeout=timedelta(seconds=10),
             )
+            await asyncio.sleep(3)
 
-            raise ValueError(
-                f"After {self._count} emails, {self._email} has unsubscribed."
-            )
-        # handle error
-        except Exception as e:
-            self._subscribed = False
-            self._message = f"Error: {e}"
-            await workflow.start_activity(
-                send_email,
-                ComposeEmail(self._email, self._message, self._count),
-                start_to_close_timeout=timedelta(seconds=10),
-            )
-            raise ValueError(f"Error: {e}")
         return ComposeEmail(self._email, self._message, self._count)
 
     @workflow.query
@@ -91,7 +64,6 @@ class SendEmailWorkflow:
 async def main():
     client = await Client.connect("localhost:7233")
 
-    # run worker here
     worker = Worker(
         client,
         task_queue="hello-activity-task-queue",
