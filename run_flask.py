@@ -1,3 +1,4 @@
+# @@@SNIPSTART run_flask
 from typing import Any, Dict
 
 from flask import Flask, jsonify, request
@@ -61,6 +62,6 @@ async def end_subscription():
     await handle.cancel()
     return jsonify({"status": "ok"})
 
-
 if __name__ == "__main__":
     app.run(debug=True)
+# @@@SNIPEND
