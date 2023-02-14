@@ -17,6 +17,8 @@ documentation = "https://docs.temporal.io/docs/python"
 python = "^3.7"
 temporalio = "^1.0.0"
 flask = {extras = ["async"], version = "^2.2.2"}
+ruff = "^0.0.246"
+
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
@@ -33,8 +35,8 @@ dependencies = { pydantic = "^1.10.4" }
 
 
 [tool.poe.tasks]
-format = [{cmd = "black ."}, {cmd = "isort ."}]
-lint = [{cmd = "black --check ."}, {cmd = "isort --check-only ."}]
+format = [{cmd = "ruff --fix ."}, {cmd = "black ."}, {cmd = "isort ."}]
+lint = [{cmd = "ruff check ."}, {cmd = "black --check ."}, {cmd = "isort --check-only ."}]
 test = "pytest"
 
 
@@ -63,3 +65,7 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = "opentelemetry.*"
 ignore_errors = true
+
+[tool.ruff]
+select = ["E", "F"]
+line-length = 99
