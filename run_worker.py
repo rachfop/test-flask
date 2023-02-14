@@ -1,3 +1,4 @@
+# @@@SNIPSTART run_worker
 import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
@@ -75,3 +76,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+# @@@SNIPEND
